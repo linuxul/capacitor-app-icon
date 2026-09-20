@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Capacitor
 
 @objc(AppIconPlugin)
@@ -6,11 +7,11 @@ public class AppIconPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "AppIconPlugin"
     public let jsName = "AppIcon"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "isSupported", returnType: CAPPluginReturnPromise),
-        // CAPPluginMethod(name: "appIconBadgeNumber", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getName", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "change", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "reset", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "isSupported", returnType: .promise),
+        // CAPPluginMethod(name: "appIconBadgeNumber", returnType: .promise),
+        CAPPluginMethod(name: "getName", returnType: .promise),
+        CAPPluginMethod(name: "change", returnType: .promise),
+        CAPPluginMethod(name: "reset", returnType: .promise)
     ]
 
     @objc func isSupported(_ call: CAPPluginCall) {
@@ -55,13 +56,13 @@ public class AppIconPlugin: CAPPlugin, CAPBridgedPlugin {
 
             if suppressNotification {
                 if UIApplication.shared.responds(to: #selector(getter: UIApplication.supportsAlternateIcons)) && UIApplication.shared.supportsAlternateIcons {
-                    typealias setAlternateIconName = @convention(c) (NSObject, Selector, NSString?, @escaping (NSError) -> Void) -> Void
+                    typealias SetAlternateIconName = @convention(c) (NSObject, Selector, NSString?, @escaping (NSError) -> Void) -> Void
 
                     let selectorString = "_setAlternateIconName:completionHandler:"
 
                     let selector = NSSelectorFromString(selectorString)
                     let imp = UIApplication.shared.method(for: selector)
-                    let method = unsafeBitCast(imp, to: setAlternateIconName.self)
+                    let method = unsafeBitCast(imp, to: SetAlternateIconName.self)
                     method(UIApplication.shared, selector, iconName as NSString?, { _ in })
 
                     call.resolve()
