@@ -7,40 +7,41 @@ public class AppIconPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "AppIconPlugin"
     public let jsName = "AppIcon"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "isSupported", returnType: .promise),
-        // CAPPluginMethod(name: "appIconBadgeNumber", returnType: .promise),
-        CAPPluginMethod(name: "getName", returnType: .promise),
-        CAPPluginMethod(name: "change", returnType: .promise),
-        CAPPluginMethod(name: "reset", returnType: .promise)
+        .async("isSupported", AppIconPlugin.isSupported),
+        .async("getName", AppIconPlugin.getName),
+        .promise("change", AppIconPlugin.change),
+        .promise("reset", AppIconPlugin.reset)
     ]
 
-    @objc func isSupported(_ call: CAPPluginCall) {
-        DispatchQueue.main.sync {
-            call.resolve([
-                "value": UIApplication.shared.supportsAlternateIcons
-            ])
-        }
+    /// UIApplication is main-actor state: the method runs on the main actor instead of blocking the bridge queue on a
+    /// DispatchQueue.main.sync.
+    @MainActor
+    func isSupported(_ call: CAPPluginCall) async -> JSObject {
+        return [
+            "value": UIApplication.shared.supportsAlternateIcons
+        ]
     }
 
-    @objc func getName(_ call: CAPPluginCall) {
-        DispatchQueue.main.sync {
-            call.resolve([
-                "value": UIApplication.shared.alternateIconName as Any
-            ])
-        }
+    /// Resolves with `{ value }`: the alternate icon's name, or null for the primary icon.
+    @MainActor
+    func getName(_ call: CAPPluginCall) async -> JSObject {
+        return [
+            "value": UIApplication.shared.alternateIconName ?? NSNull()
+        ]
     }
 
-    @objc func reset(_ call: CAPPluginCall) {
+    // change and reset stay synchronous: the bridge queue runs them in the order of the calls and each hands its
+    // UIKit work to the main queue in that order, so the last call wins. Async methods would not keep that order.
 
+    func reset(_ call: CAPPluginCall) {
         setIcon(iconName: nil, suppressNotification: false, call)
     }
 
-    @objc func change(_ call: CAPPluginCall) {
+    func change(_ call: CAPPluginCall) throws {
         let iconName = call.getString("name") ?? ""
-        
+
         guard !iconName.isEmpty else {
-            call.reject("Must provide an icon name.")
-            return
+            throw CAPPluginError("Must provide an icon name.")
         }
 
         setIcon(iconName: iconName, suppressNotification: false, call)
