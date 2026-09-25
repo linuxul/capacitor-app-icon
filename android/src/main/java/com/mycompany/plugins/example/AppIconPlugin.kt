@@ -3,6 +3,7 @@ package com.mycompany.plugins.example
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
+import com.getcapacitor.PluginException
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
@@ -31,12 +32,10 @@ public class AppIconPlugin : Plugin() {
     @PluginMethod
     public fun change(call: PluginCall) {
         if (!call.data.has("name")) {
-            call.reject("Must provide an icon name")
-            return
+            throw PluginException("Must provide an icon name")
         }
         if (!call.data.has("disable")) {
-            call.reject("Must provide an array of icon names to disable")
-            return
+            throw PluginException("Must provide an array of icon names to disable")
         }
 
         implementation.change(call.getString("name"), call.getArray("disable"))
@@ -46,8 +45,7 @@ public class AppIconPlugin : Plugin() {
     @PluginMethod
     public fun reset(call: PluginCall) {
         if (!call.data.has("disable")) {
-            call.reject("Must provide an array of icon names to disable")
-            return
+            throw PluginException("Must provide an array of icon names to disable")
         }
 
         implementation.reset(call.getArray("disable"))
